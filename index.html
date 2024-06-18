@@ -60,7 +60,7 @@
 
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(function() {
-            alert("Password copied to clipboard! 🎉");
+            console.log("Coppied")
         }, function(err) {
             alert("Failed to copy password 😞");
         });
