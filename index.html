@@ -1,79 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-        #container {
-            text-align: center;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        #password {
-            font-size: 20px;
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 100%;
-        }
-        #copyButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Strong Password Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    #container {
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #container h2 {
+      margin-bottom: 10px;
+    }
+
+    #password {
+      font-size: 20px;
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      word-wrap: break-word; /* handle very long passwords gracefully */
+    }
+
+    #copyButton {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    /* Toast styling */
+    #toast {
+      visibility: hidden; /* Hide by default */
+      min-width: 250px;
+      margin-left: -125px; /* Center the toast */
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1;
+      left: 50%;
+      bottom: 30px;
+      font-size: 17px;
+      opacity: 0; /* Initially hidden */
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+
+    /* Toast show class (triggered in JS) */
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
 
 <div id="container">
-    <h2>Random Strong Password Generator 🔐</h2>
-    <p id="password"></p>
-    <button id="copyButton">Copy Password 📋</button>
+  <h2>Random Strong Password Generator 🔐</h2>
+  <p id="password"></p>
+  <button id="copyButton">Copy Password 📋</button>
 </div>
 
+<!-- Toast notification -->
+<div id="toast">Password copied to clipboard!</div>
+
 <script>
-    function generatePassword() {
-        const length = 16;
-        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-        let password = "";
-        for (let i = 0, n = charset.length; i < length; ++i) {
-            password += charset.charAt(Math.floor(Math.random() * n));
-        }
-        return password;
+  // Function to ensure at least one lowercase, uppercase, digit and special character
+  function generateStrongPassword(length = 16) {
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const digitChars = "0123456789";
+    const specialChars = "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+
+    // Make sure our final password always has at least one of each category
+    let passwordArray = [
+      lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length)),
+      uppercaseChars.charAt(Math.floor(Math.random() * uppercaseChars.length)),
+      digitChars.charAt(Math.floor(Math.random() * digitChars.length)),
+      specialChars.charAt(Math.floor(Math.random() * specialChars.length))
+    ];
+
+    // Fill the remaining length with random characters from all sets combined
+    const allChars = lowercaseChars + uppercaseChars + digitChars + specialChars;
+    for (let i = 4; i < length; i++) {
+      passwordArray.push(allChars.charAt(Math.floor(Math.random() * allChars.length)));
     }
 
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function() {
-            console.log("Coppied")
-        }, function(err) {
-            alert("Failed to copy password 😞");
-        });
+    // Shuffle the array to avoid predictable sequence of 4 guaranteed chars
+    for (let i = passwordArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [passwordArray[i], passwordArray[j]] = [passwordArray[j], passwordArray[i]];
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const password = generatePassword();
-        document.getElementById("password").textContent = password;
+    return passwordArray.join("");
+  }
 
-        document.getElementById("copyButton").addEventListener("click", function() {
-            copyToClipboard(password);
-        });
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast("Password copied to clipboard!");
+    }, function(err) {
+      alert("Failed to copy password 😞");
     });
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = "show";
+
+    // Hide the toast automatically after 3 seconds
+    setTimeout(function() {
+      toast.className = toast.className.replace("show", "");
+    }, 3000);
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Generate the password initially
+    const password = generateStrongPassword();
+    document.getElementById("password").textContent = password;
+
+    // Copy button event listener
+    document.getElementById("copyButton").addEventListener("click", function() {
+      copyToClipboard(password);
+    });
+  });
 </script>
 
 </body>
