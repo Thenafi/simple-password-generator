@@ -34,7 +34,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
       width: 100%;
-      word-wrap: break-word; /* handle very long passwords gracefully */
+      word-wrap: break-word;
     }
 
     #copyButton {
@@ -48,11 +48,10 @@
       outline: none;
     }
 
-    /* Toast styling */
     #toast {
-      visibility: hidden; /* Hide by default */
+      visibility: hidden;
       min-width: 250px;
-      margin-left: -125px; /* Center the toast */
+      margin-left: -125px;
       background-color: #333;
       color: #fff;
       text-align: center;
@@ -63,11 +62,10 @@
       left: 50%;
       bottom: 30px;
       font-size: 17px;
-      opacity: 0; /* Initially hidden */
+      opacity: 0;
       transition: opacity 0.5s, visibility 0.5s;
     }
 
-    /* Toast show class (triggered in JS) */
     #toast.show {
       visibility: visible;
       opacity: 1;
@@ -82,38 +80,41 @@
   <button id="copyButton">Copy Password 📋</button>
 </div>
 
-<!-- Toast notification -->
 <div id="toast">Password copied to clipboard!</div>
 
 <script>
-  // Function to ensure at least one lowercase, uppercase, digit and special character
   function generateStrongPassword(length = 16) {
     const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
     const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const digitChars = "0123456789";
     const specialChars = "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    const allChars = lowercaseChars + uppercaseChars + digitChars + specialChars;
+    const alphaChars = lowercaseChars + uppercaseChars;
 
-    // Make sure our final password always has at least one of each category
-    let passwordArray = [
+    // Guarantee at least one of each category in the middle section
+    let middleArray = [
       lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length)),
       uppercaseChars.charAt(Math.floor(Math.random() * uppercaseChars.length)),
       digitChars.charAt(Math.floor(Math.random() * digitChars.length)),
       specialChars.charAt(Math.floor(Math.random() * specialChars.length))
     ];
 
-    // Fill the remaining length with random characters from all sets combined
-    const allChars = lowercaseChars + uppercaseChars + digitChars + specialChars;
-    for (let i = 4; i < length; i++) {
-      passwordArray.push(allChars.charAt(Math.floor(Math.random() * allChars.length)));
+    // Fill the rest of the middle (total length minus first and last characters)
+    for (let i = middleArray.length; i < length - 2; i++) {
+      middleArray.push(allChars.charAt(Math.floor(Math.random() * allChars.length)));
     }
 
-    // Shuffle the array to avoid predictable sequence of 4 guaranteed chars
-    for (let i = passwordArray.length - 1; i > 0; i--) {
+    // Shuffle the middle section
+    for (let i = middleArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [passwordArray[i], passwordArray[j]] = [passwordArray[j], passwordArray[i]];
+      [middleArray[i], middleArray[j]] = [middleArray[j], middleArray[i]];
     }
 
-    return passwordArray.join("");
+    // Pick a random alphabet for the first and last characters
+    const firstChar = alphaChars.charAt(Math.floor(Math.random() * alphaChars.length));
+    const lastChar  = alphaChars.charAt(Math.floor(Math.random() * alphaChars.length));
+
+    return firstChar + middleArray.join("") + lastChar;
   }
 
   function copyToClipboard(text) {
@@ -129,18 +130,15 @@
     toast.textContent = message;
     toast.className = "show";
 
-    // Hide the toast automatically after 3 seconds
     setTimeout(function() {
       toast.className = toast.className.replace("show", "");
     }, 3000);
   }
 
   document.addEventListener("DOMContentLoaded", function() {
-    // Generate the password initially
     const password = generateStrongPassword();
     document.getElementById("password").textContent = password;
 
-    // Copy button event listener
     document.getElementById("copyButton").addEventListener("click", function() {
       copyToClipboard(password);
     });
